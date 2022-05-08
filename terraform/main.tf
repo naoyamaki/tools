@@ -3,7 +3,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.0"
+      version = "~> 4.13.0"
     }
     archive = {
       source  = "hashicorp/archive"
@@ -74,7 +74,7 @@ resource "aws_lambda_function" "function" {
 
   environment {
     variables = {
-      HOOK_URL = "https://hogehoge.com/service/hogehoge/fugafuga/"
+      HOOK_URL = "https://hooks.slack.com/services/XXXXXXXXXX/XXXXXXXXXX/XXXXXXXXXX"
     }
   }
 }
@@ -84,4 +84,9 @@ resource "aws_lambda_layer_version" "lambda_layer" {
   layer_name       = local.layer_name
   filename         = data.archive_file.layer_source.output_path
   source_code_hash = data.archive_file.layer_source.output_base64sha256
+}
+
+resource "aws_lambda_function_url" "test_live" {
+  function_name      = local.function_name
+  authorization_type = "AWS_IAM"
 }

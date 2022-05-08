@@ -1,0 +1,5 @@
+.DS_Store
+# terraformのライブラリ＆ロックファイルを除外
+.terraform*
+# lambdaアップロード用のzipを配置するディレクトリを除外
+terraform/archive

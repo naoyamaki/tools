@@ -41,11 +41,20 @@ resource "aws_iam_role" "iam_for_lambda" {
 EOF
 }
 
+# layerとのディレクトリ分どうしたらいいか考え中
+data "archive_file" "layer_source" {
+  type        = "zip"
+  source_dir  = "lambda/layer/org"
+  output_path = "lambda/layer/requests.zip"
+}
+
 # 関数名をディレクトリ名と一致させて管理
 locals {
   # 変数名は仮
   function_name = "runcommandsanple"
-  function_dir = "lambda/runcommandsanple"
+  function_dir  = "lambda/runcommandsanple"
+  layer_name    = "requests"
+  layer_path    = "lambda/layer"
 }
 
 data "archive_file" "function_source" {
@@ -54,14 +63,12 @@ data "archive_file" "function_source" {
   output_path = "archive/${local.function_name}.zip"
 }
 
-# レイヤー未作成なのでエラーになるlambdaをデプロイしている
 resource "aws_lambda_function" "function" {
   function_name = local.function_name
-  handler       = "lambda.handler"
+  handler       = "lambda_function.lambda_handler"
   role          = aws_iam_role.iam_for_lambda.arn
   runtime       = "python3.9"
-
-
+  layers = ["${aws_lambda_layer_version.lambda_layer.arn}"]
   filename         = data.archive_file.function_source.output_path
   source_code_hash = data.archive_file.function_source.output_base64sha256
 
@@ -70,4 +77,11 @@ resource "aws_lambda_function" "function" {
       HOOK_URL = "https://hogehoge.com/service/hogehoge/fugafuga/"
     }
   }
+}
+
+# Layer
+resource "aws_lambda_layer_version" "lambda_layer" {
+  layer_name       = local.layer_name
+  filename         = data.archive_file.layer_source.output_path
+  source_code_hash = data.archive_file.layer_source.output_base64sha256
 }

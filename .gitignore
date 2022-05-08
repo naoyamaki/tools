@@ -3,3 +3,4 @@
 .terraform*
 # lambdaアップロード用のzipを配置するディレクトリを除外
 terraform/archive
+terraform/lambda/layer/org/python/*

@@ -1,0 +1,12 @@
+{
+	"Comment": "execute hogehoge in fugafuga instance",
+	"DocumentName": "AWS-RunShellScript",
+	"InstanceIds": [ "i-abcd1234", "i-efgh5678" ],
+	"MaxConcurrency": "1",
+	"Parameters": {
+		 "commands": [
+			"sh /home/ec2-user/hogehoge.sh"
+		]
+	},
+	"TimeoutSeconds": 30
+}

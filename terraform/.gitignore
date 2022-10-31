@@ -1,0 +1,5 @@
+# terraformのライブラリ＆ロックファイルを除外
+.terraform*
+# lambdaアップロード用のzipを配置するディレクトリを除外
+lambda-src/function-archives/*
+lambda-src/layer-archives/*

@@ -1,0 +1,49 @@
+{
+	"Comment": "A description of my state machine",
+	"StartAt": "アタッチ済みSGを取得",
+	"States": {
+		"アタッチ済みSGを取得": {
+			"Type": "Task",
+			"Next": "80ポート解放SGをアタッチ",
+			"Parameters": {
+				"Attribute": "MyData",
+				"InstanceId": "MyData"
+			},
+			"Resource": "arn:aws:states:::aws-sdk:ec2:describeInstanceAttribute"
+		},
+		"80ポート解放SGをアタッチ": {
+			"Type": "Task",
+			"Parameters": {
+				"InstanceId": "MyData"
+			},
+			"Resource": "arn:aws:states:::aws-sdk:ec2:modifyInstanceAttribute.waitForTaskToken",
+			"Next": "証明書を更新"
+		},
+		"証明書を更新": {
+			"Type": "Task",
+			"Next": "80ポート解放SGをデタッチ",
+			"Parameters": {
+				"Comment": "execute hogehoge in fugafuga instance",
+				"DocumentName": "AWS-RunShellScript",
+				"InstanceIds": [ "i-abcd1234", "i-efgh5678" ],
+				"MaxConcurrency": "1",
+				"Parameters": {
+					 "commands": [
+						"sh /home/ec2-user/hogehoge.sh"
+					]
+				},
+				"TimeoutSeconds": 30
+			},
+			"Resource": "arn:aws:states:::aws-sdk:ssm:sendCommand.waitForTaskToken"
+		},
+		"80ポート解放SGをデタッチ": {
+			"Type": "Task",
+			"End": true,
+			"Parameters": {
+				"InstanceId": "MyData"
+			},
+			"Resource": "arn:aws:states:::aws-sdk:ec2:modifyInstanceAttribute"
+		}
+	}
+}
+

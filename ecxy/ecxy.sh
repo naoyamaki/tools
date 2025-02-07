@@ -1,9 +1,11 @@
 #!/bin/sh
 
 # オプションの処理
+sh_command="/bin/bash"
 profile=""
-while getopts "p:" opt; do
+while getopts "ap:" opt; do
   case $opt in
+    a) sh_command="/bin/ash" ;;
     p) profile=$OPTARG ;;
   esac
 done

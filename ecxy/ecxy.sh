@@ -9,7 +9,6 @@ while getopts "ap:" opt; do
     p) profile=$OPTARG ;;
   esac
 done
-
 if [ -n "$profile" ]; then
   profile="--profile $profile"
 fi
@@ -26,43 +25,34 @@ if ! command -v aws &> /dev/null; then
   exit 1
 fi
 
+# リソース選択関数
+select_resource() {
+  local resource_name=$1
+  shift
+  local resources=($@)
+  
+  if [ ${#resources[@]} -eq 0 ]; then
+    echo "${resource_name}が見つかりません" >&2
+    exit 1
+  else
+    echo "対象の${resource_name}を選択してください"
+  fi
+  select resource in "${resources[@]}"; do
+    echo "$resource を選択しました"
+    break
+  done
+}
+
 # クラスター選択
 clusters=($(aws ecs list-clusters --output json $profile | jq -r '.clusterArns[]'))
-if [ ${#clusters[@]} -eq 0 ]; then
-  echo "対象のクラスタが見つかりません" >&2
-  exit 1
-else
-  echo "対象のクラスタを選択してください"
-fi
-select cluster in "${clusters[@]}"; do
-  echo $cluster"を選択しました";
-  break
-done
+cluster=$(select_resource "クラスタ" "${clusters[@]}")
 
 # タスク選択
 tasks=($(aws ecs list-tasks --cluster $cluster --output json $profile | jq -r '.taskArns[]'))
-if [ ${#tasks[@]} -eq 0 ]; then
-  echo "対象のタスクが見つかりません" >&2
-  exit 1
-else
-  echo "対象のタスクを選択してください"
-fi
-select task in "${tasks[@]}"; do
-  echo $task"を選択しました";
-  break
-done
+task=$(select_resource "タスク" "${tasks[@]}")
 
 # コンテナ選択
 containers=($(aws ecs describe-tasks --cluster $cluster --tasks $task --output json $profile | jq -r '.tasks[].containers[].name'))
-if [ ${#containers[@]} -eq 0 ]; then
-  echo "対象のコンテナが見つかりません" >&2
-  exit 1
-else
-  echo "対象のコンテナを選択してください"
-fi
-select container in "${containers[@]}"; do
-  echo $container"を選択しました";
-  break
-done
+container=$(select_resource "コンテナ" "${containers[@]}")
 
 aws ecs execute-command --cluster $cluster --task $task --container $container --interactive --command "/bin/bash" $profile

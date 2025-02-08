@@ -33,26 +33,33 @@ select_resource() {
   
   if [ ${#resources[@]} -eq 0 ]; then
     echo "${resource_name}が見つかりません" >&2
-    exit 1
+    return 1
   else
-    echo "対象の${resource_name}を選択してください"
+    echo "対象の${resource_name}を選択してください" >&2
   fi
   select resource in "${resources[@]}"; do
-    echo "$resource を選択しました"
+    echo "$resource を選択しました" >&2
+    echo "$resource"
     break
   done
 }
 
 # クラスター選択
 clusters=($(aws ecs list-clusters --output json $profile | jq -r '.clusterArns[]'))
-cluster=$(select_resource "クラスタ" "${clusters[@]}")
+if ! cluster=$(select_resource "クラスタ" "${clusters[@]}"); then
+  exit 1
+fi
 
 # タスク選択
 tasks=($(aws ecs list-tasks --cluster $cluster --output json $profile | jq -r '.taskArns[]'))
-task=$(select_resource "タスク" "${tasks[@]}")
+if ! task=$(select_resource "タスク" "${tasks[@]}"); then
+  exit 1
+fi
 
 # コンテナ選択
 containers=($(aws ecs describe-tasks --cluster $cluster --tasks $task --output json $profile | jq -r '.tasks[].containers[].name'))
-container=$(select_resource "コンテナ" "${containers[@]}")
+if ! container=$(select_resource "コンテナ" "${containers[@]}"); then
+  exit 1
+fi
 
 aws ecs execute-command --cluster $cluster --task $task --container $container --interactive --command "/bin/bash" $profile

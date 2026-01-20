@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Nginx Lua Test Container</title>
+</head>
+<body>
+	<h1>Nginx Lua Test Container</h1>
+	<p>このコンテナは、Nginx + Luaモジュールを使用して、不安定なAPIやレスポンス遅延をシミュレートするためのテスト用コンテナです。</p>
+
+	<h2>エンドポイント</h2>
+
+	<h3><a href="/">/</a></h3>
+	<p>通常のHTMLページを返します。</p>
+	<ul>
+		<li>ステータスコード: 200 OK</li>
+		<li>注意: このエンドポイントへのアクセスはログに記録されません</li>
+	</ul>
+
+	<h3><a href="/unstable/">/unstable/</a></h3>
+	<p>環境変数ERR_PCTで指定した確率でエラーを返します。</p>
+	<ul>
+		<li>成功時: 200 OK "ok" を返却</li>
+		<li>失敗時: 503 Service Unavailable</li>
+		<li>環境変数: ERR_PCT (デフォルト: 50)</li>
+		<li>0-100の整数で指定（例: 50 = 50%の確率でエラー）</li>
+	</ul>
+
+	<h3><a href="/wait/">/wait/</a></h3>
+	<p>環境変数WAIT_SECで指定した秒数待機してからレスポンスを返します。</p>
+	<ul>
+		<li>ステータスコード: 200 OK "ok" を返却</li>
+		<li>環境変数: WAIT_SEC (デフォルト: 5)</li>
+		<li>秒数で指定（例: 5 = 5秒待機）</li>
+	</ul>
+
+	<h3><a href="/wait/unstable/">/wait/unstable/</a></h3>
+	<p>WAIT_SECで指定した秒数待機してから、ERR_PCTの確率でエラーを返します。</p>
+	<ul>
+		<li>動作: まず待機 → その後エラーチェック</li>
+		<li>成功時: 200 OK "ok" を返却（待機後）</li>
+		<li>失敗時: 503 Service Unavailable（待機後）</li>
+		<li>環境変数: WAIT_SEC (デフォルト: 5), ERR_PCT (デフォルト: 50)</li>
+	</ul>
+
+	<h2>環境変数の設定例</h2>
+	<p>Docker実行時に環境変数を変更することで、動作をカスタマイズできます：</p>
+	<pre>docker run -p 80:80 -e ERR_PCT=30 -e WAIT_SEC=10 poc-nginx</pre>
+
+	<p>Note: / 以外のすべてのエンドポイントへのアクセスはログに記録されます。</p>
+</body>
+</html>
